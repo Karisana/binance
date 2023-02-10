@@ -18,7 +18,7 @@ class Currency:
         self.count = 0
 
     def get_data(self):
-        time.sleep(1)
+        time.sleep(0.5)
         price_in_api = json.loads(self.link_api.text)
         price = float(price_in_api[306]["price"])
         times = datetime.now().strftime("%H:%M:%S")
