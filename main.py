@@ -1,3 +1,5 @@
+import os
+
 import requests
 import json
 from datetime import datetime
@@ -13,6 +15,7 @@ class Currency:
         self.difference = 0
         self.now_price = 0
         self.now_time = 0
+        self.count = 0
 
     def get_data(self):
         time.sleep(1)
@@ -33,33 +36,36 @@ class Currency:
         if self.difference <= res:
             print(f'Упало больше, чем на 1%. Сейчас цена {self.now_price} {self.difference}. '
                   f'Была цена {self.MAX_PRICE}')
-            # максимум должен обновляться в течение часа.
 
     def check_max(self):
-
-        with open('data.txt', 'r') as out:
-            data = csv.reader(out)
-            max_data_info = max(data, key=lambda x: x[1])
-            max_prise_time = max_data_info[0].replace('(', '')
-            max_prise = float(max_data_info[1].replace(' ', '').replace(')', ''))
-            if self.MAX_PRICE < max_prise:
-                self.MAX_PRICE = max_prise
-                self.difference = float('{:f}'.format(self.MAX_PRICE / 100 * 1))
-                print(f'    !!!Изменилось значение у {self.MAX_PRICE}!!!     ')
+        with open('data.txt', 'r+') as out:
+            if self.count < 3600:
+                data = csv.reader(out)
+                max_data_info = max(data, key=lambda x: x[1])
+                # max_prise_time = max_data_info[0].replace('(', '')
+                max_prise = float(max_data_info[1].replace(' ', '').replace(')', ''))
+                if self.MAX_PRICE < max_prise:
+                    self.MAX_PRICE = max_prise
+                    self.difference = float('{:f}'.format(self.MAX_PRICE / 100 * 1))
+                    print(f'    !!!Изменилось значение у {self.MAX_PRICE}!!!     ')
+            else:
+                out.truncate()
+                print('Данные обнулены')
+                self.count = 0
+                self.MAX_PRICE = 0
 
     def main(self):
-        print()
-        for _ in range(3600):
-            self.get_data()
-            self.write_data()
-            self.check_max()
-            self.check_now_price()
-
-        print('End')
+        self.get_data()
+        self.write_data()
+        self.check_max()
+        self.check_now_price()
 
 
 a = Currency()
-a.main()
+while True:
+    a.main()
+    print(a.count)
+    a.count += 1
 
 # list = [0, 2,2 ,45,6,6,7 ,7,2, 5,2, 5]
 # a = list[-3:]
