@@ -5,3 +5,15 @@
 
 Сейчас каждый час файл и данные обнуляются.
 В дальнейшем нужно будет придумать более удобным файл и быстрый. 
+
+Модули: 
+import requests
+import json
+from datetime import datetime
+import time
+import csv
+import requests
+import json
+from datetime import datetime
+import time
+import csv

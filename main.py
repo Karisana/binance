@@ -1,5 +1,3 @@
-import os
-
 import requests
 import json
 from datetime import datetime
@@ -42,7 +40,6 @@ class Currency:
             if self.count < 3600:
                 data = csv.reader(out)
                 max_data_info = max(data, key=lambda x: x[1])
-                # max_prise_time = max_data_info[0].replace('(', '')
                 max_prise = float(max_data_info[1].replace(' ', '').replace(')', ''))
                 if self.MAX_PRICE < max_prise:
                     self.MAX_PRICE = max_prise
