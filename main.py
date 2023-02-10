@@ -63,9 +63,11 @@ class Currency:
 
 a = Currency()
 while True:
-    a.main()
-    print(a.count)
-    a.count += 1
+    try:
+        a.main()
+        a.count += 1
+    except Exception:
+        print('Что-то сломалось')
 
 # list = [0, 2,2 ,45,6,6,7 ,7,2, 5,2, 5]
 # a = list[-3:]
