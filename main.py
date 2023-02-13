@@ -1,71 +1,56 @@
-import requests
-import json
-from datetime import datetime
+from binance import Client
 import time
-import csv
 
 
-class Currency:
-    link_api = requests.get('https://api3.binance.com/api/v3/ticker/price')
-    MAX_PRICE = 0
+class BinanceCheckCurrencies:
+    apikey = 'vmPUZE6mv9SD5VNHk4HlWFsOr6aKE2zvsw0MuIgwCIPy6utIco14y7Ju91duEh8A'
+    secret = 'NhqPtmdSJYdKjVHjA7PZj4Mge3R5YNiP1e3UZjInClVN65XAbvqqM6A7H5fATj0j'
+    client = Client(apikey, secret)
+    currencies = 'XRPUSDT'
+    time_check = '60'
+    start_str = time_check + ' minutes ago UTC'
+    price_list = []
+    res_price_list = []
+    max_price_index = None
 
-    def __init__(self):
-        self.difference = 0
-        self.now_price = 0
-        self.now_time = 0
-        self.count = 0
-
-    def get_data(self):
-        time.sleep(0.5)
-        price_in_api = json.loads(self.link_api.text)
-        price = float(price_in_api[306]["price"])
-        times = datetime.now().strftime("%H:%M:%S")
-        self.now_price = price
-        self.now_time = times
-        return times, price
-
-    def write_data(self):
-        with open('data.txt', 'a') as out:
-            out.write(f'{self.get_data()}\n')
-
-    def check_now_price(self):
-        res = self.MAX_PRICE - self.now_price
-        res = round(res, 5)
-        if self.difference <= res:
-            print(f'Упало больше, чем на 1%. Сейчас цена {self.now_price} {self.difference}. '
-                  f'Была цена {self.MAX_PRICE}')
-
-    def check_max(self):
-        with open('data.txt', 'r+') as out:
-            if self.count < 3600:
-                data = csv.reader(out)
-                max_data_info = max(data, key=lambda x: x[1])
-                max_prise = float(max_data_info[1].replace(' ', '').replace(')', ''))
-                if self.MAX_PRICE < max_prise:
-                    self.MAX_PRICE = max_prise
-                    self.difference = float('{:f}'.format(self.MAX_PRICE / 100 * 1))
-                    print(f'    !!!Изменилось значение у {self.MAX_PRICE}!!!     ')
-            else:
-                out.truncate()
-                print('Данные обнулены')
-                self.count = 0
-                self.MAX_PRICE = 0
+    @staticmethod
+    def search_difference(max_num, min_num, percent_difference):
+        difference = max_num / 100 * percent_difference
+        if max_num - min_num >= difference:
+            return True
 
     def main(self):
-        self.get_data()
-        self.write_data()
-        self.check_max()
-        self.check_now_price()
+        agg_trades = self.client.aggregate_trade_iter(symbol=self.currencies, start_str=self.start_str)
+
+        for trade in agg_trades:
+            if float(trade['p']) not in self.price_list:
+                self.price_list.append(float(trade['p']))
+
+            self.max_price_index = self.price_list.index(max(self.price_list))
+
+            self.res_price_list = self.price_list
+            del self.res_price_list[0:self.max_price_index]
+            res = self.search_difference(max(self.res_price_list), min(self.res_price_list), 1)
+            if res:
+                print('max_price_index ->', self.max_price_index,
+                      'Была максимальная цена за час', max(self.res_price_list))
+
+                return print(f'Была максимальная цена за час {max(self.res_price_list)}. '
+                             f'Минимальная цена за час {min(self.res_price_list)}')
+
+                # return print(f'За час цена упала больше 1%. Было {max(self.res_price_list)}')
 
 
-a = Currency()
+sheck = BinanceCheckCurrencies()
+
 while True:
     try:
-        a.main()
-        a.count += 1
-    except Exception:
-        print('Что-то сломалось')
+        sheck.main()
+        # print(sheck.price_list)
+        # print(sheck.res_price_list)
+        time.sleep(3600)
+    except Exception as err:
+        print(err)
 
-# list = [0, 2,2 ,45,6,6,7 ,7,2, 5,2, 5]
-# a = list[-3:]
-# print(a)
+# print(sheck.price_list)
+# print(sheck.res_price_list)
